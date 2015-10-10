@@ -8,6 +8,7 @@ var Doodles = (function () {
 
 	function refreshFrame() {
 		$("iframe")[0].contentWindow.location.reload();
+		$("iframe").focus();
 	}
 
 	return {
