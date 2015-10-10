@@ -1,5 +1,5 @@
 *last updated 10.10.2015*
-# Doodle
+# Doodles
 _cool stuff that doesn't belong anywhere else_
 
 All of these are cool little things I've written over the years that don't
