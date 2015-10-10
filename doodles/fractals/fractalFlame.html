@@ -1,0 +1,208 @@
+<html>
+	<style>
+		canvas {
+			width: 700px;
+			height: 500px;
+			position: absolute;
+			top: 0; left: 0; right: 0; bottom: 0;
+			margin: auto;
+			
+			border: 1px solid black;
+		}
+	</style>
+	<body>
+		<canvas id="pesho" width="700px" height="500px"></canvas>
+	
+		<script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+		<script>
+			var canvas = document.getElementById("pesho"),
+				context = canvas.getContext("2d");
+			
+			function map(x, a, b, c, d) {
+				var coef = (x - a) / (b - a);
+				if (coef > 1)
+					return d;
+				if (coef < 0)
+					return c;
+					
+				return c + coef * (d - c);
+			}
+			
+			function lerp(a, b, c) {
+				return (a < b ? a : b) + Math.abs(b - a) * c;
+			}
+			
+			function mapColor(coef, palette) {
+				var lim = 1 / palette.length,
+					pick = ~~(coef / lim) + 1;
+					
+				if (pick >= palette.length)
+					pick = palette.length - 1;
+				
+				coef = coef - ((~~(coef / lim)) / 10);
+			
+				setColor(lerp(palette[pick - 1][0], palette[pick][0], coef),
+					lerp(palette[pick - 1][1], palette[pick][1], coef),
+					lerp(palette[pick - 1][2], palette[pick][2], coef));
+			}
+			
+			function setColor(r, g, b, a) {
+				if (!a) a = 1;
+				context.fillStyle = "rgba(" + ~~r + "," + ~~g + "," + ~~b + "," + a + ")";
+				context.strokeStyle = "rgba(" + ~~r + "," + ~~g + "," + ~~b + "," + a + ")";
+			}
+			
+			var F = [
+					function (x, y) { return [x / 2, y / 2]; },
+					function (x, y) { return [(x + 1) / 2, y / 2]; },
+					function (x, y) { return [x / 2, (y + 1) / 2]; }
+				],
+				V = [
+					//function (x, y) { return [x, y]; },
+					//function (x, y) { return [Math.sin(x), Math.cos(y)]; },
+					function (x, y) { var r = (x * x + y * y); return [x / r, y / r]; },
+					//function (x, y) { var r = Math.sqrt(x * x + y * y), theta = Math.atan(y / x); return [r * Math.cos(theta + r), r * Math.sin(theta + r)]; },
+					//function (x, y) { var r = Math.sqrt(x * x + y * y), theta = Math.atan(y / x); return [r * Math.cos(2 * theta), r * Math.sin(2 * theta)]; },
+					//function (x, y) { var r = Math.sqrt(x * x + y * y), theta = Math.atan(y / x); return [r * Math.sin(r + theta), r * Math.cos(theta - r)]; },
+					//function (x, y) { return [Math.sin(x), Math.sin(y)]; },
+				],
+				coef = [
+					{ a: 0.562482, b: 0.397861, c: -0.539599, d: 0.501088, e: -0.42992, f: -0.112404, w: 0.333 },
+					{ a: -0.900388, b: 0.293063, c: 0.397598, d: 0.0225629, e: 0.465126, f: -0.277212, w: 0.333 },
+					{ a: -0.329863, b: -0.0855261, c: -0.369381, d: -0.858379, e: 0.977861, f: 0.547595, w: 0.333 },
+					//{ a: .5, b: .5, c: .5, d: .5, e: .5, f: .5, w: .5 },
+				];
+		
+			var constants = {
+				iterationCount: 3000000,
+			}
+			
+			var iteration = 0,
+				x = -1 + Math.random() * 2,
+				y = -1 + Math.random() * 2,
+				histogram = [],
+				histogramMax = 0,
+				rendering = false,
+				linearPalette = [
+					[245, 89, 12], 
+					[246, 88, 13], 
+					[246, 87, 13], 
+					[247, 86, 14], 
+					[247, 85, 14], 
+					[248, 84, 15], 
+					[249, 82, 15], 
+					[249, 81, 15], 
+					[250, 80, 16], 
+					[250, 79, 16], 
+					[251, 78, 17], 
+					[252, 76, 17], 
+					[252, 75, 18], 
+					[253, 74, 18], 
+					[253, 73, 19], 
+					[254, 72, 19], 
+					[255, 71, 20], 
+					[108, 13, 24], 
+					[139, 13, 24], 
+					[170, 14, 24], 
+					[201, 14, 24], 
+					[231, 15, 24], 
+					[249, 15, 23], 
+					[250, 16, 20], 
+					[250, 16, 17], 
+					[251, 17, 14], 
+					[252, 17, 11], 
+					[252, 18, 88], 
+					[253, 18, 58], 
+					[253, 19, 28], 
+					[254, 40, 19], 
+					[255, 70, 20], 
+					[245, 90, 12], 
+					[246, 88, 12], 
+					[246, 87, 13], 
+					[247, 86, 13], 
+					[247, 85, 14], 
+					[248, 84, 14], 
+					[249, 82, 15], 
+					[249, 81, 15], 
+					[250, 80, 16], 
+					[250, 79, 16], 
+					[251, 78, 17], 
+					[252, 76, 17], 
+					[252, 75, 18], 
+					[253, 74, 18], 
+					[253, 73, 19], 
+					[254, 72, 19], 
+					[255, 70, 20], 
+					
+				];
+				
+			for (var x = 0; x <= canvas.width; ++ x) {
+				histogram[x] = [];
+				for (var y = 0; y <= canvas.height; ++y)
+					histogram[x][y] = 0;
+			}
+			
+			function render() {
+				rendering = true;
+				//histogramMax = Math.log(histogramMax) / Math.log(5);
+				for (var y = 0; y < canvas.height; ++ y) {
+					for (var x = 0; x < canvas.width; ++x) {
+						var coef = Math.log(histogram[x][y]) / Math.log(histogramMax);
+						
+						//coef *= 7.4;
+						
+						/*if (coef > 1)
+							coef = 1;
+						if (coef < 0.2)
+							coef = 0.2;
+						if (coef > 0.2 && coef < 0.25)
+							coef = 0.3;*/
+						mapColor(coef, linearPalette);
+						context.fillRect(x, y, 1, 1);
+					}
+				}
+			}
+			
+			context.fillRect(0, 0, canvas.width, canvas.height);
+			//function iterate() {
+			while(true) {
+				if (iteration >= constants.iterationCount) {
+					if (!rendering);
+					//canvas.style.webkitFilter = "blur(0.01em)";
+						render();
+					break;
+				}
+					
+				if (iteration >= 20) {
+					var mapX = ~~map(x, -2.5, 2.5, 0, canvas.width),
+						mapY = ~~map(y, -2.5, 2.5, 0, canvas.height);
+				
+					
+					//context.fillRect(mapX, mapY, 0.5, 0.5);
+									 
+					//var mapX = ~~map(x, -1, 1, 0, canvas.width),
+					//	mapY = ~~map(y, -1, 1, 0, canvas.height);
+					histogram[mapX][mapY]++;
+					if (mapX > 0 && mapX < canvas.width &&
+						mapY > 0 && mapY < canvas.height &&
+						histogram[mapX][mapY] > histogramMax)
+						histogramMax = histogram[mapX][mapY];
+				}
+				var tCoef = ~~(Math.random() * coef.length);
+				
+				var res = V[~~(Math.random() * V.length)](
+						coef[tCoef].a * x + coef[tCoef].b * y + coef[tCoef].c,
+						coef[tCoef].d * x + coef[tCoef].e * y + coef[tCoef].f);
+					
+				x = res[0];
+				y = res[1];
+					
+				iteration ++;
+				//setTimeout(iterate, 0);
+			}
+			//iterate();
+			
+			
+		</script>
+	</body>
+</html>

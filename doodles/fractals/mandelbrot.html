@@ -1,0 +1,180 @@
+<html>
+	<style>
+		.pesho {
+			width: 1000px;
+			height: 750px;
+			position: absolute;
+			top: 0; left: 0; right: 0; bottom: 0;
+			margin: auto;
+			
+			border: 1px solid black;
+		}
+		body {
+			position: relative;
+            background: black;
+		}
+	</style>
+	<body>
+		<canvas class="pesho" width="1000px" height="750" id="pesho"></canvas> 
+		<script>
+			var canvas = document.getElementById("pesho"),
+                context = canvas.getContext("2d");
+			
+			function c(a, b) {
+				this.a = a;
+				this.b = b;
+				this.mult = function (d) {
+				
+					var a = this.a,
+					b = this.b,
+					c = d.a,
+					d = d.b;
+					
+					this.a = a * c - b * d; //this.a * d.a - this.b * d.b;
+					this.b = a * d + b * c; //this.a * d.b + this.b * d.a;
+				}
+				
+				this.add = function (d) {
+					this.a = this.a + d.a;
+					this.b = this.b + d.b;
+				}
+				
+				this.dist = function () {
+					return Math.sqrt(this.a * this.a + this.b * this.b);
+				}
+			
+			}
+			
+			function checkSet(z, c, i, count) {
+				if (i == count) {
+					//console.log(z.dist());
+					return z;
+				}
+				
+				z.mult(z);
+				z.add(c);
+
+				return checkSet(z, c, i + 1, count);
+			}
+			
+			function map(x, a, b, c, d) {
+				var coef = (x - a) / (b - a);
+				return c + coef * (d - c);
+			}
+	
+			//for (var i = 2; i < 5; ++ i) {
+			
+			var count = 1,
+				completed = false,
+				histogram = [],
+				text = "Loading",
+				totalCount = 5000,
+				rendering = true,
+				palette = [
+					
+				],
+                cache = [];
+				
+			for (var i = 0; i < totalCount; ++ i)
+				histogram[i] = 0;
+            
+            for (var x = 0; x <= 1000; ++ x) {
+                cache[x] = [];
+                for (var y = 0; y <= 750; ++ y) {
+                    var p =  new c(map(x, -50, 850, -2.5, 1), map(y, 120, 630, -1, 1));
+                    cache[x][y] = [p, checkSet(new c(0, 0), p, 0, count)];
+                }
+            }
+			
+			context.font = "bold 35px Arial";
+			
+			function loadingChange() {
+				context.clearRect(0, 0, canvas.width, canvas.height);
+				if (count == totalCount || rendering)
+					return;
+					
+				var dots = text.split("g")[1] ? text.split("g")[1].length + 1 : 1;
+				if (dots == 4)
+					dots = 0;
+				
+				text = "Loading";
+				console.log(text);
+				for (var i = 0; i < dots; ++i)
+					text += ".";
+				
+				context.fillText(text, 400, 400);
+				
+				setTimeout(loadingChange, 100);
+			}
+			loadingChange();
+			
+			function drawFractal() {
+				if (!completed)
+					setTimeout(drawFractal, 10);
+                
+                var iterationTime = new Date();
+                
+                //8 hours rendering time
+//                if (d - renderStart > 28800000) 
+                
+                if (count >= totalCount) {
+					if (!rendering) {
+						count = 0;
+						rendering = true;
+						
+						drawFractal();
+					}
+					
+					return;
+				}
+				
+				console.log("generating for i: " + count + " after: " + (iterationTime - startTime));
+                startTime = iterationTime;
+					
+				completed = false;
+                
+                var colorC = map(count, 0, totalCount, 1, 0);
+                context.fillStyle = "rgb(0," + ~~(colorC * 255) + ", 0)";
+
+				for (var x = 0; x <= 1000; x += 1) {
+					for (var y = 0; y <= 750; y += 1) {
+                        
+                        var z = cache[x][y][1],
+                            comp = cache[x][y][0]; 
+                            
+                        z.mult(z);
+                        z.add(comp);
+
+						if (z.dist() <= 2.0) {
+							//context.fillStyle = "rgb(" + i * 10 + ",123" + i * 10 + ")";
+							//console.log("asdf");
+							
+							if (count > 3) {
+								context.fillRect(x, y, 1, 1);
+                            }
+						}
+					}
+				}
+				
+					
+				completed = true;
+				count ++;
+				
+				setTimeout(drawFractal, 1);
+			}
+			
+            count = 3;
+            context.fillStyle = "black";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.translate(100, 0);
+            
+			context.globalAlpha = 0.1;
+			
+            var renderStart = new Date();
+            drawFractal();
+            var startTime = new Date();
+			
+            //}
+		</script>
+	</body>
+</html>

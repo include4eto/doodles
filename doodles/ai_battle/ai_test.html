@@ -1,0 +1,285 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    
+    <body>
+        <canvas id="game-canvas" width="900px" height="600px"></canvas>
+    
+        <script>
+            var canvas = document.getElementById("game-canvas"),
+                context = canvas.getContext("2d");
+            
+            function Distance(a, b) {
+                var dx = a.x - b.x,
+                    dy = a.y - b.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+            
+            function Unit(_x, _y, _region, _team, _speed) {
+                this.x = _x;
+                this.y = _y;
+                this.hp = 10;
+                this.region = _region;
+                this.attackCooldown = 0;
+				this.team = _team;
+				this.speed = _speed;
+                
+                this.target = undefined;
+                
+                this.findTarget = function () {
+					this.target = this;
+					
+					while (this.target == this || this.team == this.target.team)
+						this.target = units[parseInt(Math.random() * units.length)];
+					
+					return;
+                    var target = regions[0];
+                    
+                    for (var i in regions) {
+                        if (!regions[i].count)
+                            continue;
+                        
+                        if ((regions[i].count <= target.count && 
+								target.count != 0 && regions[i].count != 0) &&
+                            regions[i].unit.x != this.x &&
+                            regions[i].unit.y != this.y)
+                            target = regions[i];
+                    }
+                    
+                    if (target.unit && target.unit.x != this.x &&
+                        target.unit.y != this.y)
+                        this.target = target.unit;
+                }
+                
+                this.update = function () {
+					if (!this.hp)
+						return;
+					this.attackCooldown --;
+                    if (!this.target || !this.target.hp)
+                        this.findTarget();
+                    
+                    if (!this.target)
+                        return;
+                    
+					var dist = Distance(this, this.target);
+                    if (this.target.hp && this.attackCooldown <= 0 &&
+                        dist < 30) {
+                        
+                        this.attackCooldown = 2;
+						
+						var damage = ~~(Math.random() * 3 + 1);
+						//bonus damage for blue
+						if (!this.team)
+							damage += 8;
+						
+						if (damage > this.target.hp)
+							damage = this.target.hp;
+                        this.target.hp -= damage;
+						
+						if (this.target.team)
+							redHp -= damage;
+						else blueHp -= damage;
+						
+						if (!this.target.hp)
+							if (this.target.team)
+								red --;
+							else blue --;
+                    }
+                    
+                    var dx = this.x - this.target.x > 15 ? -this.speed : this.speed,
+                        dy = this.y - this.target.y > 15 ? -this.speed : this.speed;
+                    
+					//CAN BE REMOVED
+					/*
+					if (Math.abs(this.x - this.target.x) < 20)
+						dx = 0;
+					if (Math.abs(this.y - this.target.y) < 20)
+						dy = 0;*/
+					
+					
+                    if (!(this.x + dx > 0 && this.x + dx < 800 &&
+                        this.y + dy > 0 && this.y + dy < 600))
+                        return;
+						
+					if (dist < 25)
+						return;
+					
+                    this.x += dx;
+                    this.y += dy;
+					
+					
+					for (var i in units)
+						if (units[i].hp && units[i] != this && Distance(units[i], this) < 22) {
+							this.x -= dx;
+							this.y -= dy;
+							
+							this.findTarget();
+							break;
+						}
+                    
+                    for (var i in regions)
+                        if (this.x > regions[i].startX && this.x < regions[i].boundX &&
+                            this.y > regions[i].startY && this.y < regions[i].boundY) {
+                            regions[this.region].count--;
+                            this.region = i;
+                            regions[i].count++;
+                            regions[i].unit = this;
+                            break;    
+                        }
+                            
+                }
+                
+                this.draw = function () {
+                    if (!this.hp) {
+						return;
+						context.fillStyle = this.team ? "rgba(255, 0, 0, 0.3)" :
+							"rgba(0, 0, 255, 0.3)" ;
+							
+						context.beginPath();
+							context.arc(this.x + 1, this.y - 3, 10, 0, 2 * Math.PI);
+						context.fill();
+					}
+					else {
+						context.strokeStyle = this.team ? "red" : "blue";	
+						context.beginPath();
+							context.arc(this.x + 1, this.y - 3, 10, 0, 2 * Math.PI);
+						context.stroke();
+						context.fillStyle = "black";
+						context.fillText(this.hp, this.x - 5, this.y);
+					}
+                }
+            }
+            
+            
+            function Region(_startX, _startY) {
+                this.unit = undefined;
+                this.count = 0;
+                
+                //faster than calculating them each time
+                this.startX = _startX;
+                this.startY = _startY;
+                this.boundX = _startX + 300;
+                this.boundY = _startY + 200;
+            }
+        
+			var units, map, regions, red, blue, redHp, blueHp;
+			function generate() {
+				units = [];
+				map = {};
+				regions = [new Region(0, 0), new Region(450, 0), new Region(900, 0),
+						   new Region(0, 300), new Region(450, 300), new Region(900, 300),
+						   new Region(0, 600), new Region(450, 600), new Region(900, 600)];
+						   
+				red = 0;
+				blue = 0;
+				redHp = 0;
+				blueHp = 0;
+				
+				for (var i = 0; i < 200; ++ i) {
+					var x = 50 + Math.random() * 600,
+						y = 50 + Math.random() * 500;
+						
+					var unit = new Unit(x, y, 0, ~~(y > 300), 1),
+						shit = false;
+					
+					unit.hp = 3 + ~~(Math.random() * 13);
+					for (var k in units)
+						if (Distance(unit, units[k]) < 30)
+							shit = true;
+							
+					if (shit)
+						continue;
+				
+					if (unit.team) {
+						//bonus hp for red
+						//less speed for red
+						unit.hp += 70;
+						unit.speed = 1;
+					
+						red ++;
+						redHp += unit.hp;
+					}
+					else {
+						//more speed for blue
+						unit.speed = 2;
+						
+						blue ++;
+						blueHp += unit.hp;
+					}
+					units.push(unit);
+					regions[0].count++;
+					regions[0].unit = units[units.length - 1]
+				}
+			}
+			
+			generate();
+			var state = "menu";
+			
+			window.onclick = function (e) {
+				var x = e.clientX,
+					y = e.clientY;
+					
+				if (state != "menu")
+					return;
+					
+				if (x > 200 && x < 300 &&
+					y > 200 && y < 240)
+					generate();
+				
+				if (x > 200 && x < 300 &&
+					y > 260 && y < 300)
+					state = "game";
+			}
+			
+			context.font = "13px Verdana";
+            function draw() {
+				context.fillStyle = "rgba(255, 255, 255, 1)";
+				context.fillRect(0, 0, canvas.width, canvas.height);
+                for (var i in units)
+                    units[i].draw();
+					
+				context.fillStyle = "red";
+				context.fillText("Red: " + red, 650, 50);
+				context.fillStyle = "blue";
+				context.fillText("Blue: " + blue, 720, 50);
+				
+				context.fillStyle = "red";
+				context.fillText("Red hp: " + redHp, 650, 80);
+				context.fillStyle = "blue";
+				context.fillText("Blue hp: " + blueHp, 760, 80);
+				
+				
+				if (state == "menu") {
+					context.save();
+					context.fillStyle = "black";
+					context.strokeStyle = "black";
+					context.font = "18px Verdana";
+					
+					context.clearRect(200, 200, 100, 40);
+					context.strokeRect(200, 200, 100, 40);
+					context.fillText("Generate", 210, 223);
+					
+					context.clearRect(200, 260, 100, 40);
+					context.strokeRect(200, 260, 100, 40);
+					context.fillText("Start", 230, 283);
+					context.restore();
+				}
+            }
+            
+            function update() {
+				if (state == "menu")
+					return;
+					
+				if (red == 0 || blue == 0)
+					state = "menu";
+				
+                for (var i in units)
+                    units[i].update();
+            }
+            
+            setInterval(update, 30);
+            setInterval(draw, 1000 / 60);
+        </script>
+    </body>
+</html>

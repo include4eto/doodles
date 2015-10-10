@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Peggle</title>
+        <style>
+            canvas {
+                border: 1px solid black;
+                width: 800px;
+                height: 600px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <canvas id="my-canvas" width="800px" height="600px"></canvas>
+
+        <script>
+            var canvas = document.getElementById("my-canvas"),
+                context = canvas.getContext("2d"),
+                ballsCount = 100;
+
+            var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+                                        window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+            window.requestAnimationFrame = requestAnimationFrame;
+
+            function Vector(x, y) {
+                this.x = x;
+                this.y = y;
+
+                this.add = function (vec) {
+                    this.x += vec.x;
+                    this.y += vec.y;
+                }
+
+                this.magnitude = function () {
+                    return Math.sqrt(this.x * this.x + this.y * this.y);
+                }
+            }
+
+            function Ball(x, y, radius, colour) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.velocity = new Vector(0, 0);
+                this.colour = colour;
+
+                this.draw = function () {
+                    context.beginPath();
+                    context.strokeStyle = this.colour;
+                        context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+                    context.stroke();
+                };
+
+                this.update = function () {
+                    this.x += this.velocity.x;
+                    this.y += this.velocity.y;
+                }
+            }
+
+            var myBalls = [new Ball(400, 10, 10, "black")],
+                gravity = new Vector(0, 0.2),
+                launcher = new Vector(0, 0);
+
+            var balls = [];
+            for (var i = 0; i < ballsCount; i++) {
+                balls.push(new Ball(20 + Math.random() * 750, Math.random() * 400 + 100, 10, "red"));
+            }
+
+            function launch() {
+                var myBall = new Ball(400, 10, 10, "black");
+				myBall.velocity.x = (launcher.x - canvas.width / 2 + 5) / (53 - power);
+				myBall.velocity.y = launcher.y / (53 - power);
+
+				myBall.x = launcher.x;
+				myBall.y = launcher.y;
+
+				myBalls.push(myBall);
+				balls.push(myBall);
+				power = 0;
+				held = false;
+			}
+
+            window.onmousemove = function (mouse) {
+				var dx = mouse.x - canvas.width / 2 + 5,
+					dy = mouse.y,
+					dist = Math.sqrt(dx * dx + dy * dy);
+
+				var sin = dy / dist, cos = dx / dist,
+					rX = cos * (dist - 100),
+					rY = sin * (dist - 100);
+
+                launcher.x = mouse.x - rX;
+                launcher.y = mouse.y - rY;
+            }
+
+			window.onmousedown = function (mouse) {
+				held = true;
+			}
+
+			window.onmouseup = function (mouse) {
+				if (held)
+					launch();
+				held = false;
+			}
+
+			var power = 0,
+				state = 0,
+				held = false;
+
+			var collisions = [];
+            function update() {
+				if (held) power++;
+				if (power >= 50)
+					launch();
+
+				for (var ball1 in balls) {
+				    var myBall = balls[ball1];
+				    myBall.velocity.add(gravity);
+
+				    myBall.update();
+				    for (var ball in balls) {
+					if (ball == ball1)
+					continue;
+				        var curBall = balls[ball],
+                            dx = myBall.x - curBall.x,
+                            dy = myBall.y - curBall.y,
+                            dist = Math.sqrt(dx * dx + dy * dy),
+                            magnitude = myBall.velocity.magnitude() * 0.8;
+
+				        var sin = dy / dist, cos = dx / dist,
+                            targetR = myBall.radius + curBall.radius,
+                            rX = cos * targetR,
+                            rY = sin * targetR;
+
+				        if (targetR >= dist) {
+				            collisions.push([curBall.x + rX, curBall.y + rY]);
+				            myBall.x = curBall.x + rX;
+				            myBall.y = curBall.y + rY;
+
+				            myBall.velocity.x = (dx / dist) * magnitude;
+				            myBall.velocity.y = (dy / dist) * magnitude;
+				        }
+				    }
+
+				    if (myBall.x + myBall.radius >= canvas.width) {
+				        myBall.x = canvas.width - myBall.radius;
+				        myBall.velocity.x *= -0.7;
+				        myBall.velocity.y *= 0.7;
+				    }
+
+				    if (myBall.x < 0) {
+				        myBall.x = myBall.radius;
+				        myBall.velocity.x *= -0.7;
+				        myBall.velocity.y *= 0.7;
+				    }
+
+				    if (myBall.y + myBall.radius >= canvas.height) {
+				        myBall.y = canvas.height - myBall.radius;
+				        myBall.velocity.y *= -0.7;
+				        myBall.velocity.x *= 0.7;
+				    }
+
+				    if (myBall.y < 0) {
+				        myBall.y = myBall.radius;
+				        myBall.velocity.y *= -0.7;
+				        myBall.velocity.x *= 0.7;
+				    }
+				}
+                setTimeout(update, 1000 / 60);
+            }
+
+            function render() {
+				context.fillStyle = "rgba(255, 255, 255, 0.7)";
+                context.fillRect(0, 0, canvas.width, canvas.height);
+
+                context.fillStyle = "black";
+
+                context.beginPath();
+                    context.moveTo(canvas.width / 2, 0);
+                    context.lineTo(launcher.x, launcher.y);
+                context.stroke();
+
+                context.lineWidth = 2;
+
+                for (var ball in myBalls)
+                    myBalls[ball].draw(context);
+
+                for (var ball in balls) {
+                    balls[ball].draw();
+                }
+
+				//context.strokeStyle = "blue";
+                //context.beginPath();
+				//for (var x in collisions) {
+				//	//context.strokeRect(collisions[x][0], collisions[x][1], 10, 10);
+				//	context.arc(collisions[x][0], collisions[x][1],
+				//		10, 0, Math.PI * 2);
+				//}
+                //context.stroke();
+
+				if (state == 0) {
+					context.font = "20px Verdana";
+					context.fillText("Power", 700, 200);
+
+					context.fillRect(730, 180 - power, 10, power);
+				}
+
+
+                requestAnimationFrame(render);
+            }
+
+            render();
+            update();
+        </script>
+    </body>
+</html>

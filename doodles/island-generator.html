@@ -1,0 +1,130 @@
+<canvas id="my-canvas" width="600px" height="600px"></canvas>
+
+<script>
+	var canvas = document.getElementById("my-canvas"),
+		context = canvas.getContext("2d");
+		
+	var map = [], size = 50, drawSize = canvas.width / size;
+	for (var i = 0; i < size; ++ i) {
+		map[i] = [];
+		for (var k = 0; k < size; ++ k) {
+			map[i][k] = 0;
+		}
+	}
+
+	var maxIslandSize = 700;
+	var islandX = ~~(Math.random() * size),
+		islandY = ~~(Math.random() * size);
+
+	var queue = [{x: islandX, y: islandX}], islandSize = 0;
+	while (islandSize <= maxIslandSize && queue.length > 0) {
+		var current = queue.splice(0, 1)[0];
+		if (map[current.x][current.y] != 0)
+			continue;
+
+		map[current.x][current.y] = 1;
+		islandSize ++;
+
+		if (current.x + 1 < size && Math.random() >= 0.2)
+			queue.push({x: current.x + 1, y: current.y});
+		if (current.y + 1 < size && Math.random() >= 0.7)
+			queue.push({x: current.x, y: current.y + 1});
+		if (current.x - 1 >= 0 && Math.random() >= 0.4)
+			queue.push({x: current.x - 1, y: current.y});
+		if (current.y - 1 >= 0 && Math.random() >= 0.3)
+			queue.push({x: current.x, y: current.y - 1});
+	}
+
+	for (var i = 0; i < size; ++ i) {
+		for (var k = 0; k < size; ++ k) {
+			if (map[i][k] == 1)
+				continue;
+
+			var numN = 0;
+			if (i - 1 >= 0 && map[i - 1][k] == 1) numN ++;
+			if (k - 1 >= 0 && map[i][k - 1] == 1) numN ++;
+			if (i + 1 < size && map[i + 1][k] == 1) numN ++;
+			if (k + 1 < size && map[i][k + 1] == 1) numN ++;
+				
+			if (numN >= 3)
+				map[i][k] = 1;
+		}
+	}
+
+	var fps = 0, last = new Date().valueOf();
+	context.font = "bold 22px Helvetica, sans-serif";
+
+	function draw() {
+		var date = new Date().valueOf();
+		fps = (16 / (date - last)) * 60;
+		fps = ~~fps;
+		last = date;
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		
+		for (var y = 0; y < size; ++ y) {
+			for (var x = 0; x < size; ++ x) {
+				if (map[x][y] == 0)
+					context.fillStyle = "rgba(0, 0, 255, 0.5)";
+				else context.fillStyle = "rgba(122, 122, 0, 0.5)";
+				//context.beginPath();
+				//context.arc(x * drawSize, y * drawSize, drawSize * 1.7, 0, Math.PI * 2);				
+				//context.fill();
+				context.fillRect(x * drawSize, y * drawSize, drawSize, drawSize);
+			}
+		}
+
+		var pixels = context.getImageData(0, 0, canvas.width, canvas.height),
+			newData = pixels.data,
+			imageData =  new Uint8ClampedArray(pixels.data.length);
+		for (var i = 0; i < imageData.length; i++)
+			imageData[i] = pixels.data[i];
+
+		for (var i = 0; i < imageData.length; i += 4) {
+			var nextY = i + canvas.width * 4,
+				prevY = i - canvas.width * 4,
+				prevX = i - 4,
+				nextX = i + 4;
+
+			var numC = 0;
+			if (nextY < imageData.length) {
+				numC ++;
+				newData[i] += imageData[nextY];
+				newData[i + 1] += imageData[nextY + 1];
+				newData[i + 2] += imageData[nextY + 2];
+			}
+
+			if (nextX < imageData.length) {
+				numC ++;
+				newData[i] += imageData[nextX];
+				newData[i + 1] += imageData[nextX + 1];
+				newData[i + 2] += imageData[nextX + 2];
+			}
+			
+			if (prevY > 0) {
+				numC ++;
+				newData[i] += imageData[prevY];
+				newData[i + 1] += imageData[prevY + 1];
+				newData[i + 2] += imageData[prevY + 2];
+			}
+
+			if (prevX > 0) {
+				numC ++;
+				newData[i] += imageData[prevX];
+				newData[i + 1] += imageData[prevX + 1];
+				newData[i + 2] += imageData[prevX + 2];
+			}
+
+			newData[i] /= numC;
+			newData[i + 1] /= numC;
+			newData[i + 2] /= numC;
+		}
+
+		//context.clearRect(0, 0, canvas.width, canvas.height);
+		//wcontext.putImageData(pixels, 0, 0);
+
+		context.fillStyle = "red";
+		context.fillText(fps + "fps", 10, 50);
+	}
+	
+	setInterval(draw, 1000 / 60);
+</script>

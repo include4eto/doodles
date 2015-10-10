@@ -1,0 +1,134 @@
+<style>
+    #hidden, #animated {
+/*        display: none;*/
+        width: 400px;
+        height: 225px;
+        
+        border: 1px dotted black;
+    }
+</style>
+
+<canvas id='hidden' width='400px' height='225px'></canvas>
+<canvas id='animated' width='400px' height='225px'></canvas>
+
+<script>
+    function ImageFromFile (src) { var img = new Image(); img.src = src; return img; }
+    
+    var lenna = ImageFromFile('lenna.jpg'),
+        hiddenCanvas = document.getElementById('hidden'),
+        hiddenContext = hiddenCanvas.getContext('2d');
+    
+    lenna.onload = function () {
+        hiddenContext.drawImage(lenna, 0, 0);
+    
+        prepareAnimation();  
+    };
+</script>
+
+<script>
+    var canvas = document.getElementById('animated'),
+        context = canvas.getContext('2d'),
+        pixels = undefined,
+        original = undefined,
+        variation = 10,
+        deviation = 0.8;
+    
+    //d = deviation
+    function gaussian (x, y, d) {
+        if (!d) d = 0.84089642;
+        
+        return (1 / (2 * Math.PI * d * d)) * Math.exp(-(x * x + y * y) / (2 * d * d)); 
+    }
+    
+    function map(x, a, b, c, d) {
+        var coef = (x - a) / (b - a);
+        return c + coef * (d - c);
+    }
+    
+    function prepareAnimation () {
+        pixels = hiddenContext.getImageData(0, 0, canvas.width, canvas.height);
+        original = hiddenContext.getImageData(0, 0, canvas.width, canvas.height);
+        
+        animate();
+    }
+    
+    function getIndexFromDirection(x, y, d) {
+        var success = false,
+            i;
+        
+        switch (d) {
+            case 0:
+                if (x - 1 >= 0) {
+                    success = true;                    
+                    x -= 1;
+                }
+                break;
+                
+            case 1:
+                if (x + 1 < canvas.width) {
+                    success = true;                    
+                    x += 1;
+                }
+                break;
+                
+            case 2:
+                if (y - 1 >= 0) {
+                    success = true;                    
+                    y -= 1;
+                }
+                break;
+                
+            case 3:
+                if (y + 1 < canvas.height) {
+                    success = true;                    
+                    y += 1;
+                }
+                break;
+                
+            default:
+                break;
+        }
+        
+        i = (y * canvas.width + x) * 4; 
+        return [success, i, x, y];
+    }
+    
+    function animate() {
+        for (var i = 0; i < pixels.data.length; i += 4) {
+            var y = ~~((i / 4) / canvas.width),
+                x = ~~((i / 4) % canvas.width),
+                c = gaussian(map(x, 0, canvas.width, -1, 1), map(y, 0, canvas.height, -1, 1), deviation),
+                data = [0, 0, 0];
+            
+            data[0] = original.data[i] * c;
+            data[1] = original.data[i + 1] * c;
+            data[2] = original.data[i + 2] * c;
+            
+            for (var k = 0; k < 4; ++ k) {
+                var next = getIndexFromDirection(x, y, k);
+                if (next[0]) {
+                    c = gaussian(map(next[2], 0, canvas.width, -1, 1),
+                                 map(next[3], 0, canvas.height, -1, 1), deviation);
+                    
+                    data[0] += original.data[next[1]] * c;
+                    data[1] += original.data[next[1] + 1] * c;
+                    data[2] += original.data[next[1] + 2] * c;
+                }
+            }
+            
+//            pixels.data[i] += ~~(-variation + Math.random() * variation * 2);
+//            pixels.data[i + 1] += ~~(-variation + Math.random() * variation * 2);
+//            pixels.data[i + 2] += ~~(-variation + Math.random() * variation * 2);
+//            pixels.data[i + 2] = 255;
+            
+            pixels.data[i] = data[0];
+            pixels.data[i + 1] = data[1];
+            pixels.data[i + 2] = data[2];
+            pixels.data[i + 3] = 255;
+        }
+        
+        context.putImageData(pixels, 0, 0);
+        
+//        setTimeout(animate, 1000);
+    }
+</script>

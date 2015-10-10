@@ -1,0 +1,278 @@
+<html>
+	<head>
+		<style>
+			canvas {
+				border: 1px solid black;
+			}
+			
+			select {
+				position: absolute;
+				top: 300px;
+				left: 60px;
+				
+			}
+		</style>
+	</head>
+	
+	<body>
+		<canvas id="acanvas" width="800px" height="400px"></canvas>
+		
+		<select id="shape-select">
+			<option>Line</option>
+			<option>Triangle</option>
+			<option>Square</option>
+			<option>Circle</option>
+			<option>Ellipse</option>
+			<option>Pentagon</option>
+			<option>Hexagon</option>
+			<option>Heptagon</option>
+			<option>Octagon</option>
+			<option>Trendo</option>
+		</select>
+	</body>
+	
+	<script>
+		var canvas = document.getElementById("acanvas"),
+			context = canvas.getContext("2d"),
+			select = document.getElementById("shape-select");
+		
+		select.onchange = function(e) {
+			var shape = select.options[select.options.selectedIndex].innerText;
+			
+			vertices = shapes[shape];
+			pointerVertex = 0;
+			pointer.x = vertices[0].x;
+			pointer.y = vertices[0].y;
+			cPath = 0;
+		}
+			
+		function Vertex(_x, _y, _color) { this.x = _x; this.y = _y; this.color = _color; }
+		function Colour(_r, _g, _b) {
+			this.r = _r;
+			this.g = _g;
+			this.b = _b;
+			
+			this.toString = function () {
+				return "rgb(" + this.r + "," + this.g + "," + this.b + ")";
+			};
+		}
+		
+		function lerp(start, end, step) {
+			return start > end ? start - step : start + step;
+		}
+			
+		var lineX = 200,
+			vertices,
+			pointerVertex = 0,
+			wavePoints = [], waveX = 0;
+		
+		//shapes
+		var shapes = {
+			Line: [new Vertex(90, 120), new Vertex(90, 250)],
+			Triangle: [new Vertex(90, 120), new Vertex(130, 200), new Vertex(50, 200)],
+			Square: [new Vertex(40, 120), new Vertex(140, 120),
+					 new Vertex(140, 220), new Vertex(40, 220)],
+			Circle: [],
+			Ellipse: [],
+			Pentagon: [],
+			Hexagon: [],
+			Heptagon: [],
+			Octagon: [],
+			Trendo: []
+		};
+		
+		for (var angle = 0; angle < Math.PI * 2; angle += 0.1) {
+			shapes.Ellipse.push(new Vertex(90 + Math.sin(angle) * 50,
+								170 + Math.cos(angle) * 80));
+			shapes.Circle.push(new Vertex(90 + Math.sin(angle) * 80,
+								170 + Math.cos(angle) * 80));
+		}
+		
+		for (var angle = 0; angle < Math.PI * 2; angle += 1.3) {
+			shapes.Pentagon.push(new Vertex(90 + Math.sin(angle) * 50,
+								170 + Math.cos(angle) * 50));
+		}
+		
+		for (var angle = 0; angle < Math.PI * 2; angle += 1.05) {
+			shapes.Hexagon.push(new Vertex(90 + Math.sin(angle) * 50,
+								170 + Math.cos(angle) * 50));
+		}
+		
+		for (var angle = 0; angle < Math.PI * 2; angle += 0.9) {
+			shapes.Heptagon.push(new Vertex(90 + Math.sin(angle) * 50,
+								170 + Math.cos(angle) * 50));
+		}
+		
+		for (var angle = 0; angle < Math.PI * 2; angle += 0.8) {
+			shapes.Octagon.push(new Vertex(90 + Math.sin(angle) * 50,
+								170 + Math.cos(angle) * 50));
+		}
+		
+		shapes.Trendo.push(new Vertex(90, 10));
+		shapes.Trendo.push(new Vertex(90, 20));
+		shapes.Trendo.push(new Vertex(30, 10));
+		shapes.Trendo.push(new Vertex(50, 10));
+		shapes.Trendo.push(new Vertex(250, 10));
+		shapes.Trendo.push(new Vertex(350, 230));
+		
+		vertices = shapes.Line;
+			
+		var pointer = new Vertex(vertices[0].x, vertices[0].y);
+		function draw() {
+			context.fillStyle = "rgba(255, 255, 255, 0.1)";
+			//context.lineWidth = 59;
+			context.fillRect(0, 0, canvas.width, canvas.height);
+			
+			context.fillStyle = "black";
+			
+			context.strokeStyle = "black";
+			context.beginPath();
+			{
+				context.moveTo(lineX, 0);
+				context.lineTo(lineX, canvas.height);
+			}
+			context.stroke();
+			
+			context.strokeStyle = color.toString();
+			context.beginPath();
+				context.moveTo(vertices[0].x, vertices[0].y);
+				for(var i = 1; i < vertices.length; ++ i) {
+					context.lineTo(vertices[i].x, vertices[i].y);
+					//context.moveTo(vertices[i].x, vertices[i].y);
+				}
+				context.lineTo(vertices[0].x, vertices[0].y);
+			context.stroke();
+			
+			context.beginPath();
+				context.arc(pointer.x, pointer.y, 3, 0, 2 * Math.PI);
+			context.stroke();
+			
+			context.beginPath();
+				context.moveTo(pointer.x, pointer.y);
+				context.lineTo(lineX, pointer.y);
+			context.stroke();
+			
+			for(var i = 1; i < wavePoints.length; ++ i) {
+				context.beginPath();
+					context.strokeStyle = wavePoints[i].color;
+					context.moveTo(waveX + wavePoints[i - 1].x, wavePoints[i - 1].y);
+					context.lineTo(waveX + wavePoints[i].x, wavePoints[i].y);
+				context.stroke();
+			}
+		}
+		
+		var cPath = 0;
+		
+		function movePointer(step) {
+			var nextVertex = pointerVertex + 1 >= vertices.length ?
+				0 : pointerVertex + 1;
+				
+			var lineDx = vertices[nextVertex].x - vertices[pointerVertex].x,
+				lineDy = vertices[nextVertex].y - vertices[pointerVertex].y,
+				dist = Math.sqrt(lineDx * lineDx + lineDy * lineDy);
+				
+			cPath += step;
+			
+			var sin = lineDy / dist,
+				cos = lineDx / dist;
+			
+			pointer.x = vertices[pointerVertex].x + cos * cPath;
+			pointer.y = vertices[pointerVertex].y + sin * cPath;
+			
+			if (Math.abs(cPath - dist) < step) {
+				pointerVertex = nextVertex;
+				pointer.x = vertices[pointerVertex].x;
+				pointer.y = vertices[pointerVertex].y;
+				cPath = 0;	
+			}
+		}
+		
+		function movePointer2(step) {
+			var nextVertex = pointerVertex + 1 >= vertoices.length ?
+				0 : pointerVertex + 1;
+				
+			var vertical = vertices[pointerVertex].x == vertices[nextVertex].x;
+			
+			var dist = Math.abs(vertices[pointerVertex].y - vertices[nextVertex].y);
+			var speed = 0;
+			
+			if (vertical) {
+				pointer.y += step * (vertices[pointerVertex].y - vertices[nextVertex].y > 0 ? -1 : 1);
+				speed = step;
+			} else {
+				var lineDx = vertices[pointerVertex].x - vertices[nextVertex].x,
+					lineDy = vertices[pointerVertex].y - vertices[nextVertex].y;
+					
+				var lineA = lineDx == 0 ? 0 : lineDy / lineDx,
+					lineB = vertices[pointerVertex].y - lineA * vertices[pointerVertex].x;
+				
+				var modifier = lineDy == 0 ? 1 : lineDx / lineDy,
+					offset = step * (lineDx > 0 ? -1 : 1);
+					
+				dist = Math.sqrt(lineDx * lineDx + lineDy * lineDy);
+				//console.log(step/dist);
+
+					
+				modifier = Math.abs(lineDx) / dist;
+				pointer.x += offset * modifier;
+				pointer.y = lineA * pointer.x + lineB;
+				speed = offset * modifier;
+				
+				var dx = pointer.x - vertices[nextVertex].x,
+					dy = pointer.y - vertices[nextVertex].y;
+				cPath = Math.sqrt(dx * dx + dy * dy);
+				
+				//console.log(modifier);
+				
+				//console.log(lineA, lineB);
+				//console.log(cPath);
+			}
+			
+			if ((!vertical && cPath < step / 2) ||
+				(vertical && Math.abs(pointer.y - vertices[nextVertex].y) <= 2.5)) {
+				pointerVertex = nextVertex;
+				pointer.x = vertices[pointerVertex].x;
+				pointer.y = vertices[pointerVertex].y;
+				cPath = 0;
+			}
+			
+			return Math.abs(speed);
+		}
+		
+		var frames = 0, color = new Colour(255, 0, 255),
+			nextColor = new Colour(0, 0, 0), moveSpeed = 0.5;
+		
+		function update() {
+			var speed = movePointer(moveSpeed);
+			wavePoints.push(new Vertex(lineX - waveX, pointer.y, color.toString()));
+			waveX += moveSpeed;
+			
+			while (wavePoints[0].x + waveX > 800)
+				wavePoints.splice(0, 1);
+			
+			if (frames % 200 == 0) {
+				nextColor.r = ~~(Math.random() * 255);
+				nextColor.g = ~~(Math.random() * 255);
+				nextColor.b = ~~(Math.random() * 255);
+			}
+			
+			if (frames % 50 == 50) {
+			
+				vertices = shapes[select.options[~~(Math.random() * 10)].innerText];
+				console.log("asdf");
+				pointerVertex = 0;
+				pointer.x = vertices[0].x;
+				pointer.y = vertices[0].y;
+			}
+			
+			color.r = lerp(color.r, nextColor.r, 2);
+			color.g = lerp(color.g, nextColor.g, 2);
+			color.b = lerp(color.b, nextColor.b, 2);
+			
+			frames++;
+		}
+		
+		setInterval(draw, 1000 / 60);
+		setInterval(update, 1);
+	</script>
+</html>

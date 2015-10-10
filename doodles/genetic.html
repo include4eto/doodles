@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			canvas {
+				width: 700px;
+				height: 600px;
+				border: 1px solid black;
+				margin-right: 20px;
+			}
+
+			canvas, div {
+				float: left;
+				font: normal 18px "Comic Sans MS", cursive, sans-serif;
+			}
+		</style>
+	</head>
+
+	<body>
+		<canvas id='pesho' width='700px' height='600px'></canvas>
+		<div>
+			<span id='result'></span>
+		</div>
+
+
+		<script>
+			var canvas = document.getElementById('pesho'),
+				context = canvas.getContext('2d'),
+				resultBox = document.getElementById('result');
+            
+            context.fillStyle = 'red';
+            context.globalAlpha = 0.9;
+            context.lineWidth = 0.2;
+//            context.translate(canvas.width / 2, canvas.height / 2);
+
+			function rosenbrock(x, y) {
+				return Math.pow(1 - x, 2) + 100 * Math.pow((y - x * x), 2);
+			}
+
+			function booth(x, y) {
+				return Math.pow((x + 2 * y - 7), 2) + Math.pow((2 * x + y - 5), 2);
+			}
+			//e ^ x / abs(y) ^ y
+			function traizq(x, y) {
+				return Math.exp(x) / Math.pow(Math.abs(y), y);
+			}
+
+			function traize(x, y) {
+				return 80085 + Math.pow(6 * x - y, 4);
+			}
+
+			function kamen(x, y) {
+				return y * Math.log(x) / x;
+			}
+
+			function easom(x, y) {
+				return -Math.cos(x) * Math.cos(y) * 
+					Math.exp(-( Math.pow(x - Math.PI, 2) + Math.pow(y - Math.PI, 2) ));
+			}
+
+			function getBytes(float) {
+				var buffer = new ArrayBuffer(4),
+					intView = new Int32Array(buffer),
+					floatView = new Float32Array(buffer);
+
+				floatView[0] = float;				
+				var bytes = intView[0].toString(2).split('');
+				for (var i in bytes)
+					bytes[i] = ~~bytes[i];
+
+				return bytes;
+			}
+
+			function getFloat(bytes) {
+				var buffer = new ArrayBuffer(4),
+					intView = new Int32Array(buffer),
+					floatView = new Float32Array(buffer);
+
+				
+				intView[0] = parseInt(bytes.join(''), 2);
+				return floatView[0];
+			}
+
+			function Optimizer(_function) {
+				this.func = _function;
+
+//				var mutationFactor = 0.01, //1% chance to mutate
+//					crossoverFactor = 0.8, //70% of the "dominant" gene
+				var mutationFactor = 0.01, //1% chance to mutate
+					crossoverFactor = 0.7, //70% of the "dominant" gene
+					initialGenerationCount = 200,
+					generationCount = 20,
+                    self = this,
+                    timeout = 1;
+                
+                var generation = [],
+                    generationIndex = 0;
+                
+                var onFinished = undefined;
+
+                var rankList = [];
+				
+				//101-| 010010
+				//001 |-011010
+
+				var globalMin = undefined;
+
+				function combine(geneA, geneB) {
+					var offspring = [[], []];
+					for (var i = 0; i < geneA[0].length; i++) {
+						//crossover
+						if (i <= geneA.length * crossoverFactor) {
+							offspring[0].push(geneA[0][i]);
+							offspring[1].push(geneA[1][i]);
+						}
+						else {
+							offspring[0].push(geneB[0][i]);
+							offspring[1].push(geneB[1][i]);
+						}
+
+						//mutation
+						if (Math.random() <= mutationFactor) {
+							offspring[0][offspring[0].length - 1] = ~~!offspring[0][offspring[0].length - 1];
+							offspring[1][offspring[1].length - 1] = ~~!offspring[1][offspring[1].length - 1];
+						}
+					}
+
+					return offspring;
+				}
+
+                function asyncGenerationsLoop(generationEvaluated) {
+                    if (!generationEvaluated) {
+                        generationIndex ++;
+                        
+                        if (generationIndex >= generationCount) {
+                            if (onFinished) onFinished(globalMin);
+                            return;
+                        }
+                        
+                        context.fillStyle = "rgb(" + ~~(Math.random() * 255) + "," + ~~(Math.random() * 255) + "," + ~~(Math.random() * 255) + ")";
+                        
+                        setTimeout(function () {
+                            asyncGenerationCycle(0);
+                        }, timeout);
+                    } else {
+                        rankList.sort(function (a, b) { return a.value > b.value });
+                        var champion = rankList[0],
+                            newGeneration = [];
+
+                        newGeneration.push(champion.genes);
+
+                        for (var i = 1; i < rankList.length / 2; ++ i) {
+                            var offspring = combine(champion.genes, rankList[i].genes);
+
+                            newGeneration.push(offspring);
+                        }
+                        generation = newGeneration;
+                        rankList = [];
+
+                        resultBox.innerHTML += 'Champion: ' + Math.round(getFloat(champion.genes[0])) + ' '
+                            + Math.round(getFloat(champion.genes[1])) + ':' + Math.round(champion.value) + '<br>';
+                        
+                        if (!globalMin)
+                            globalMin = champion;
+                        else if (globalMin.value > champion.value)
+                            globalMin = champion;
+
+                        setTimeout(function () {
+                            asyncGenerationsLoop(false);
+                        }, timeout);
+                    }
+//					}   
+                }
+                
+                function asyncGenerationCycle(i) {
+                    if (i >= generation.length) {
+                        setTimeout(function () {
+                            asyncGenerationsLoop(true);
+                        }, timeout);
+                        return;
+                    }
+                    
+                    var gene = generation[i],
+                        x = getFloat(gene[0]),
+                        y = getFloat(gene[1]);
+
+                    context.beginPath();
+                    context.arc(x * 30, y * 30, 2, 0, 2 * Math.PI);
+                    context.fill();
+                    context.stroke();
+                    
+                    var val = self.func(x, y);
+                    if (!isNaN(val))
+                        rankList.push({
+                            value: val,
+                            genes: gene
+                        });
+                    
+                    setTimeout(function () {
+                        asyncGenerationCycle(i + 1);
+                    }, timeout); 
+                }
+                
+                
+				this.findMin = function findMin(callback) {
+					for (var i = 0; i < initialGenerationCount; ++ i) {
+						generation.push([getBytes(Math.random() * 20),
+							getBytes(Math.random() * 20)]); //TODO: implement adequate domain
+					}
+                    
+                    onFinished = callback;
+                    asyncGenerationCycle(0);
+				}
+			}
+
+			var optimizer = new Optimizer(kamen);
+			optimizer.findMin(function (globalMin) {
+
+                resultBox.innerHTML += 'Min found at x:' + getFloat(globalMin.genes[0]) + ' y:' + getFloat(globalMin.genes[1]) + '<br>';
+                resultBox.innerHTML += globalMin.value;
+
+                console.log('Min found at x:' + getFloat(globalMin.genes[0]) + ' y:' + getFloat(globalMin.genes[1]));
+                console.log(globalMin.value);
+            });
+		</script>
+	</body>
+</html>

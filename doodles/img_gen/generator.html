@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <canvas id='mycanvas' width='600px' height='600px'></canvas>
+    </body>
+
+    <script>
+        var canvas = document.getElementById('mycanvas'),
+            context = canvas.getContext('2d');
+        
+        function Point(x, y) {
+            this.x = x;
+            this.y = y;
+            this.dist = function (point) {
+                return Math.sqrt((this.x - point.x) * (this.x - point.x) +
+                                 (this.y - point.y) * (this.y - point.y));
+            }
+        }
+        
+        function colour(r, g, b) {
+            r = parseInt(r);
+            g = parseInt(g);
+            b = parseInt(b);
+            return "rgb(" + r + "," + g + "," + b + ")";
+        }
+        
+        var points = [];
+        for (var i = 0; i < 20; ++i) {
+            points.push(new Point (Math.random() * 600, Math.random() * 600));
+            points[i].colour = colour(Math.random() * 255, Math.random() * 255,
+                                     Math.random() * 255);
+        }
+        
+        // context.lineWidth = 0.05;
+        function render () {
+            //dumb method for rendering
+            for (var y = 0; y <= 600; ++y) {
+                for (var x = 0; x <= 600; ++ x) {
+                    var minDist = Infinity,
+                        colour = "",
+                        point = "";
+                    for (var i in points) {
+                        var dist = points[i].dist({x:x, y:y});
+                        if (dist < minDist) {
+                            colour = points[i].colour;
+                            minDist = dist;
+                            point = points[i];
+                        }
+                    }
+                    
+                    context.globalAlpha = 1;
+                    context.fillStyle = colour;
+                    context.strokeStyle = colour;
+                    context.fillRect(x, y, 1, 1);
+                    
+                    // continue;
+					context.strokeStyle = "black";
+                    context.globalAlpha = .3;
+                    context.beginPath();
+                    {
+                        context.moveTo(x, y);
+                        context.lineTo(point.x, point.y);
+                    }
+                    context.stroke();
+                }
+            }
+            
+            
+            context.fillStyle = "black";
+            for (var i in points) {
+                context.beginPath();
+                {
+                    context.arc(points[i].x, points[i].y, 3, 0, 2 * Math.PI);
+                }
+                context.fill();
+            }
+        }
+        
+        render();
+    </script>
+</html>

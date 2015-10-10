@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Main Page Thingy</title>
+		<link rel="stylesheet" href="default.css"/>
+	</head>
+
+	<body>
+		<header>
+			<h3>Doodles index</h3>
+		</header>
+
+		<nav>
+			<a href="#">./all</a><br>
+		</nav>
+
+		<!-- Include section here -->
+		<section id="wrapper">
+			<ul>
+				<li>
+					<a data-bind="click: refreshFrame">refresh frame</a>
+				</li>
+
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/wave.html')">wave</a>
+					<span>- Probably the coolest thing here.</span>
+					<a class="full" href="doodles/wave.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/avoider.html')">avoider</a>
+					<span>- Avoid the red squares. WASD to move, space to shoot, use the mouse to aim.</span>
+					<a class="full" href="doodles/avoider.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/bfs_path.html')">bfs_path</a>
+					<span>- bfs path finder</span>
+					<a class="full" href="doodles/bfs_path.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/dfs_path.html')">dfs_path</a>
+					<span>- dfs path finder</span>
+					<a class="full" href="doodles/dfs_path.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/rope_physics/index.html')">rope_physics</a>
+					<span>- Drag the rope with the mouse. WASD to change gravity, Space for no gravity</span>
+					<a class="full" href="doodles/rope_physics/index.html" target="_blank">full page link</a>
+				</li>
+
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/peggle/pc.html')">peggle 1</a>
+					<span>- click to shoot. physics demo</span>
+					<a class="full" href="doodles/peggle/pc.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/peggle/asdf.html')">peggle 2</a>
+					<span>- click to shoot. physics demo</span>
+					<a class="full" href="doodles/peggle/asdf.html" target="_blank">full page link</a>
+				</li>
+
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/island-generator.html')">island_generator</a>
+					<span>- Generates islands on a grid, randomly.</span>
+					<a class="full" href="doodles/island-generator.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/genetic.html')">genetic</a>
+					<span>- Genetic algorithm to find the min of a function.</span>
+					<a class="full" href="doodles/genetic.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/ai_battle/ai_test.html')">ai_battle</a>
+					<span>- A not-so-smart AI battles an even dumber AI.</span>
+					<a class="full" href="doodles/ai_battle/ai_test.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/ai_battle/ai_test.html')">ai_battle</a>
+					<span>- A not-so-smart AI battles an even dumber AI.</span>
+					<a class="full" href="doodles/ai_battle/ai_test.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/filters/index.html')">blur_filter</a>
+					<span>- Canvas blur filter.</span>
+					<a class="full" href="doodles/filters/index.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/fractals/mandelbrot.html')">mandelbrot_fractal</a>
+					<span>- Mandelbrot fractal generator.</span>
+					<a class="full" href="doodles/fractals/mandelbrot.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/fractals/flame.html')">fractal_flame_1</a>
+					<span>- fractal flame generator. (wait for it to load)</span>
+					<a class="full" href="doodles/fractals/flame.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/fractals/fractalFlame.html')">fractal_flame_2</a>
+					<span>- fractal flame generator 2.</span>
+					<a class="full" href="doodles/fractals/fractalFlame.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/fractals/triangle.html')">triangle</a>
+					<span>- triangle fractal generator.</span>
+					<a class="full" href="doodles/fractals/triangle.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/image_collision/pixel-collision.html')">image collision</a>
+					<span>- image collision (the map tiles are given by an image).</span>
+					<a class="full" href="doodles/image_collision/pixel-collision.html" target="_blank">full page link</a>
+				</li>
+				<li>
+					<a data-bind="click: goToPage.bind($data, 'doodles/img_gen/generator.html')">midpoint generator</a>
+					<span>- generates images by connecting midpoints of regions.</span>
+					<a class="full" href="doodles/img_gen/generator.html" target="_blank">full page link</a>
+				</li>
+			</ul>
+		</section>
+
+		<section id="preview">
+			<!-- ko if: currentPage() == '' -->
+				<div class="notice">
+					This is an iframe. Click a link to see the content here :)<br>
+					It will be focused automatically when you click something.
+				</div>
+			<!-- /ko -->
+			<iframe data-bind="attr: { src: currentPage() }"></iframe>
+		</section>
+
+		<!-- Script loading	 -->
+		<script type="text/javascript" src="knockout-3.3.0.js"></script>
+		<script type="text/javascript" src="jquery-2.1.4.min.js"></script>
+		<script type="text/javascript" src="main.js"></script>
+	</body>
+</html>

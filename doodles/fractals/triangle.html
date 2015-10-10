@@ -1,0 +1,66 @@
+
+<html>
+	<style>
+		canvas {
+			width: 500px;
+			height: 500px;
+			position: absolute;
+			top: 0; left: 0; right: 0; bottom: 0;
+			margin: auto;
+			
+			border: 1px solid black;
+		}
+	</style>
+	<body>
+		<canvas id="pesho" width="500px" height="500px"></canvas>
+	
+		<script>
+			var canvas = document.getElementById("pesho"),
+				context = canvas.getContext("2d");
+			
+			var colour = [255, 0, 123],
+				flip = [0, 0, 0];
+			
+			context.strokeStyle = "black";
+			
+			var triangles = [[[250, 10], [10, 490], [490, 490]]],
+				count = 0;
+			
+			function iterateTriangle() {
+				var triangle = triangles.splice(0, 1)[0];
+				
+				context.strokeStyle = "rgb(" + colour[0] + "," + colour[1] + "," + colour[2] + ")";
+				colour[0] = ~~(Math.random() * 0);
+				colour[1] = ~~(Math.random() * 255);
+				colour[2] = ~~(Math.random() * 255);
+				
+				context.beginPath();
+				{
+					context.moveTo(triangle[0][0], triangle[0][1]);
+					context.lineTo(triangle[1][0], triangle[1][1]);
+					context.lineTo(triangle[2][0], triangle[2][1]);
+				}
+				context.closePath();
+				context.stroke();
+				
+				var pointA = [(triangle[0][0] + triangle[1][0]) / 2, (triangle[0][1] + triangle[1][1]) / 2],
+					pointB = [(triangle[2][0] + triangle[0][0]) / 2, (triangle[2][1] + triangle[0][1]) / 2],
+					pointC = [(triangle[1][0] + triangle[2][0]) / 2, (triangle[1][1] + triangle[2][1]) / 2];
+				
+				//triangles.push([pointA, pointB, pointC]);
+				triangles.push([triangle[2], pointB, pointC]);
+				triangles.push([pointA, triangle[1], pointC]);
+				triangles.push([pointA, pointB, triangle[0]]);
+				count ++;
+				
+				//if (count == 1220)
+				//	return;
+				
+				setTimeout(iterateTriangle, 0);
+			}
+			
+			iterateTriangle();
+		
+		</script>
+	</body>
+</html>

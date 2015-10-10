@@ -1,0 +1,168 @@
+<body style="padding: 0; margin: 0">
+<canvas id="pesho" width=800 height=600></canvas>
+</body>
+
+<script>
+	var canvas = document.getElementById("pesho"),
+		context = canvas.getContext("2d"),
+		d = 68, a = 65, w = 87, s = 83, space = 32;
+		
+	var img = new Image();
+	img.src = "qshu.jpg";
+	
+	var keyboard = [],
+		myX = canvas.width / 2, myY = canvas.height / 2, speed = 5,
+		mySize = 30,
+		bulletSpeed = 10,
+		mouseX, mouseY,
+		aura = false,
+		lastShot = 0;
+		
+	var enemies = [],
+		bullets = [];
+	
+	function collides (x1, y1, w1, h1, x2, y2, w2, h2) {
+		return !(x1 + w1 < x2 ||
+				 x1 > x2 + w2 ||
+				 y1 + h1 < y2 ||
+				 y1 > y2 + h2);
+	}
+		
+	function draw() {
+		context.fillStyle = "rgb(132, 172, 255)";
+		context.fillRect(0, 0, canvas.width, canvas.height);
+			
+		context.fillStyle = "#FFB376";
+		context.fillRect(myX, myY, mySize, mySize);
+		
+		context.strokeStyle = "rgba(0, 0, 0, 0.3)";
+		if (aura)
+			context.strokeStyle = "#ff0000";
+		context.strokeRect(myX - (100 - mySize) / 2, myY - (100 - mySize) / 2, 100, 100);
+	
+		context.fillStyle = "#ff767a";
+		context.strokeStyle = "black";
+		for (var i = 0; i < enemies.length; ++ i) {
+			context.fillRect(enemies[i][0], enemies[i][1], 30, 30);
+			context.strokeRect(enemies[i][0], enemies[i][1], 30, 30);
+		}
+		
+		context.fillStyle = "black";
+		for (var i = 0; i < bullets.length; ++ i) {
+			context.fillRect(bullets[i][0], bullets[i][1], 5, 5);
+		}
+		
+		context.fillStyle = "black";
+		context.font = "20px Helvetica";
+		context.fillText("Score: " + frames, 650, 50);
+	}
+	
+	var frames = 0;
+	function update() {
+		frames ++;
+		
+		if (frames % 10 == 0) {
+			var rand = Math.random();
+			enemies.push([
+				Math.random() * 700 + 50,
+				rand > 0.5 ? -30 : 630,
+				0,
+				rand > 0.5 ? 5 : -5
+			]);
+		} else if (frames % 5 == 0) {
+			var rand = Math.random();
+			enemies.push([
+				rand > 0.5 ? -30 : 830,
+				Math.random() * 500 + 50,
+				rand > 0.5 ? 5 : -5,
+				0
+			]);
+		}
+		
+		aura = false;
+		for (var i = 0; i < enemies.length; ++ i) {
+			if (collides(enemies[i][0], enemies[i][1], 30, 30,
+						 myX - (100 - mySize) / 2, myY - (100 - mySize) / 2, 100, 100))
+						 aura = true;
+						 
+			var removed = false;
+			for (var p = 0; p < bullets.length; ++ p) {
+				if (collides(bullets[p][0], bullets[p][1], 5, 5,
+							 enemies[i][0], enemies[i][1], 30, 30)) {
+					bullets.splice(p, 1);
+					enemies.splice(i, 1);
+					removed = true;
+					break;
+				}
+			}
+			
+			if (removed) {
+				i--;
+				continue;
+			}
+			
+			if (collides(enemies[i][0], enemies[i][1], 30, 30,
+						 myX, myY, mySize, mySize))
+						 return;
+		
+			for (var k = 0; k < enemies.length; ++ k) {
+				if (collides(enemies[i][0], enemies[i][1], 30, 30,
+						     enemies[k][0], enemies[k][1], 30, 30)) {
+					enemies[i][2] = enemies[k][2];
+					enemies[i][3] = enemies[k][3];
+				}
+			}
+			enemies[i][0] += enemies[i][2];
+			enemies[i][1] += enemies[i][3];
+			
+			if (enemies[i][0] < -100 || enemies[i][0] > canvas.width + 100 ||
+				enemies[i][1] < -100 || enemies[i][1] > canvas.height + 100)
+				enemies.splice(i, 1);
+		}
+		
+		for (var i = 0; i < bullets.length; ++ i) {
+			bullets[i][0] += bullets[i][2] * bulletSpeed;
+			bullets[i][1] += bullets[i][3] * bulletSpeed;
+			if (bullets[i][0] < -100 || bullets[i][0] > canvas.width + 100 ||
+				bullets[i][1] < -100 || bullets[i][1] > canvas.height + 100)
+				bullets.splice(i, 1);
+		}
+		
+		if (keyboard[d])
+			myX += speed;
+		if (keyboard[a])
+			myX -= speed;
+		if (keyboard[w])
+			myY -= speed;
+		if (keyboard[s])
+			myY += speed;
+		
+		if (keyboard[space] && frames - lastShot >= 2) {
+			lastShot = frames;
+			
+			var dx = myX + mySize / 2 - mouseX,
+				dy = myY + mySize / 2 - mouseY,
+				len = Math.sqrt(dx * dx + dy * dy);
+				
+			bullets.push([myX + mySize / 2, myY + mySize / 2, -dx / len, -dy / len]);
+		}
+		setTimeout(update, 30);
+	}
+	
+	window.onkeydown = function (args) {
+		keyboard[args.keyCode] = true;
+		
+	}
+		
+	window.onkeyup = function (args) {
+		keyboard[args.keyCode] = false;
+	}
+	
+	window.onmousemove = function (args) {
+		mouseX = args.x;
+		mouseY = args.y;
+	}
+	
+	setInterval(draw, 10);
+	update();
+</script>

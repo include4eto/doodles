@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			canvas {
+				border: 1px solid black;
+			}
+		</style>
+	</head>
+
+	<body>
+		<canvas id="game-canvas" width="1000px" height="400px"></canvas>
+		<script>
+			var canvas = document.getElementById("game-canvas"),
+				context = canvas.getContext("2d");
+			
+			var frames = 0;
+			function Picture(src) {
+				var img = new Image();
+				img.src = src;
+				
+				return img;
+			}
+			
+			function Player(x, y, w, h, i) {
+				this.x = x;
+				this.y = y;
+				this.image = i;
+				this.w = w;
+				this.h = h;
+				
+				this.dx = 0;
+                this.dy = 0;
+				
+				this.draw = function (context) {
+					context.drawImage(this.image, this.x, this.y, this.w, this.h);
+				}
+				
+                this.stopx = function () { this.dx = 0; }
+                this.stopy = function () { this.dy = 0; }
+				this.update = function () {
+				    this.dy += 0.05;
+					this.x += this.dx;
+					this.y += this.dy;
+				}
+			}
+			
+			var world = new Picture("world1-1.png"),
+				collisionMap = new Picture("collision-map.png");
+				player = new Player(10, 10, 50, 50, new Picture("mario.png"));
+			
+			function draw() {
+				context.clearRect(0, 0, canvas.width, canvas.height);
+				context.drawImage(world, 0, 0, 600, 240, 0, 0, canvas.width, canvas.height);
+				player.draw(context);
+			}
+			
+			function collide() {
+				context.clearRect(0, 0, canvas.width, canvas.height);
+				
+				player.draw(context);
+				context.drawImage(collisionMap, 0, 0, 600, 240, 0, 0, canvas.width, canvas.height);
+                                    player.colliding = false;
+				
+				function checkColour(r, g, b) {
+					return r == 224 && g == 36 && b == 231;
+				}
+                
+				var imageData = context.getImageData(player.x, player.y, player.w, player.h);
+                    imageData = imageData.data;
+				for (var i = 3; i < player.w - 3; i ++) {
+					if (checkColour(imageData[i * player.w * 4],
+									imageData[i * player.w * 4 + 1],
+									imageData[i * player.w * 4 + 2]) ||
+                            
+						checkColour(imageData[i * (player.w - 1) * 4],
+									imageData[i * (player.w - 1) * 4 + 1],
+									imageData[i * (player.w - 1) * 4 + 2]) 
+                    ) {
+                        player.x -= player.dx * 1.5;
+                        player.stopx();
+                    }
+                    
+                    if (
+						checkColour(imageData[i * 4],
+									imageData[i * 4 + 1],
+									imageData[i * 4 + 2]) ||
+                        
+						checkColour(imageData[imageData.length - i * 4],
+									imageData[imageData.length - i * 4 + 1],
+									imageData[imageData.length - i * 4 + 2])) {
+                        player.y -= player.dy * 1.5;
+				        player.stopy();
+                    
+                    }
+				}
+			}
+			
+			function update() {
+				frames++;
+				collide();
+                
+				player.update();
+				
+                if (keyboard[68])
+                    player.dx += .2;
+                if (keyboard[65])
+                    player.dx -= .2;
+                
+                if (keyboard[87])
+                    player.dy -= .2;
+                if (keyboard[83])
+                    player.dy += .2;
+                
+                
+				//if (frames % 3 == 0) {
+					draw();
+				//}
+				
+				setTimeout(update, 10);
+			}
+			
+            var keyboard = [];
+            window.onkeydown = function (args) {
+                keyboard[args.keyCode] = true;
+                console.log(args.keyCode);
+            }
+            window.onkeyup = function (args) {
+                keyboard[args.keyCode] = false;
+            }
+            
+			update();
+		</script>
+	</body>
+</html>
